@@ -37,7 +37,7 @@ public interface NightmareCurseConfig extends Config
 	@ConfigItem(
 		keyName = "showOverlay",
 		name = "Show box",
-		description = "A box at The Nightmare and Phosani's Nightmare with the curse state and the prayer table",
+		description = "A box with the table of which prayer button turns on which protection during the curse",
 		position = 0
 	)
 	default boolean showOverlay()
@@ -49,7 +49,7 @@ public interface NightmareCurseConfig extends Config
 		keyName = "onlyAtNightmare",
 		name = "Box only at the Nightmare",
 		description = "Show the box only in the arena of The Nightmare and Phosani's Nightmare. Turn it off to keep"
-			+ " the table on screen everywhere; outside the arena the box shows just the table",
+			+ " the table on screen everywhere",
 		position = 1
 	)
 	default boolean onlyAtNightmare()
@@ -58,32 +58,10 @@ public interface NightmareCurseConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "showStatus",
-		name = "Show curse state",
-		description = "Cursed or not, as the game's chat says; a tick or a cross in the box",
-		position = 2
-	)
-	default boolean showStatus()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "tableMode",
-		name = "Show table",
-		description = "When the box shows which prayer button turns on which protection: only while cursed, or always",
-		position = 3
-	)
-	default TableMode tableMode()
-	{
-		return TableMode.WHILE_CURSED;
-	}
-
-	@ConfigItem(
 		keyName = "showPanel",
 		name = "Side panel",
 		description = "The table and a short explanation in RuneLite's sidebar",
-		position = 4
+		position = 2
 	)
 	default boolean showPanel()
 	{
@@ -95,7 +73,7 @@ public interface NightmareCurseConfig extends Config
 		name = "Panel only at the Nightmare",
 		description = "Show the sidebar button only in the arena of The Nightmare and Phosani's Nightmare."
 			+ " Turn it off to keep it in the sidebar everywhere",
-		position = 5
+		position = 3
 	)
 	default boolean panelOnlyAtNightmare()
 	{

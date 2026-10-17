@@ -50,7 +50,7 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.LinkBrowser;
 
-/** The sidebar: the curse state, the fixed prayer table and what the plugin does and does not do. */
+/** The sidebar: the fixed prayer table and what it means. */
 class NightmareCursePanel extends PluginPanel
 {
 	private static final Color CARD = ColorScheme.DARKER_GRAY_COLOR;
@@ -63,7 +63,6 @@ class NightmareCursePanel extends PluginPanel
 	private static final Color DISCORD_HOVER = new Color(0x4752C4);
 	static final String DISCORD_URL = "https://discord.gg/XgxjhyznbZ";
 
-	private final JLabel state = new JLabel();
 	private final JPanel rows = new JPanel(new GridLayout(0, 1, 0, 6));
 	private final Map<Protection, BufferedImage> icons = new EnumMap<>(Protection.class);
 
@@ -83,14 +82,6 @@ class NightmareCursePanel extends PluginPanel
 		top.add(title);
 		top.add(gap(8));
 
-		JPanel stateCard = card(new BorderLayout(0, 4));
-		state.setFont(FontManager.getRunescapeBoldFont());
-		stateCard.add(state, BorderLayout.NORTH);
-		stateCard.add(note("Taken from the game's own chat line. Clears when the curse wears off, when you die or when you leave the arena."),
-			BorderLayout.CENTER);
-		top.add(stateCard);
-		top.add(gap(8));
-
 		JPanel tableCard = card(new BorderLayout(0, 6));
 		JLabel tableTitle = new JLabel("While cursed");
 		tableTitle.setFont(FontManager.getRunescapeBoldFont());
@@ -99,13 +90,12 @@ class NightmareCursePanel extends PluginPanel
 		rows.setOpaque(false);
 		tableCard.add(rows, BorderLayout.CENTER);
 		tableCard.add(note("Left: the prayer you click. Right: the protection you get. "
-			+ "A fixed table; it never looks at what the boss does."), BorderLayout.SOUTH);
+			+ "A fixed table: the plugin never looks at the fight."), BorderLayout.SOUTH);
 		top.add(tableCard);
 
 		add(top, BorderLayout.NORTH);
 		add(discordButton(), BorderLayout.SOUTH);
 
-		setCursed(false);
 		rebuildRows();
 		if (spriteManager != null)
 		{
@@ -118,12 +108,6 @@ class NightmareCursePanel extends PluginPanel
 				}));
 			}
 		}
-	}
-
-	void setCursed(boolean cursed)
-	{
-		state.setText(cursed ? "Cursed" : "Not cursed");
-		state.setForeground(cursed ? NightmareCurseOverlay.CURSED : NightmareCurseOverlay.CLEAR);
 	}
 
 	/** Lets a preview supply the prayer icons without a running client. */

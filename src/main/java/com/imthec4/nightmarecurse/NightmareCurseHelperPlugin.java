@@ -30,14 +30,11 @@ import java.awt.image.BufferedImage;
 import java.util.Locale;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.ActorDeath;
-import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
@@ -50,13 +47,12 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.client.util.Text;
 
 /**
- * A reference card for the Nightmare's curse. The curse shuffles the protection prayer buttons;
- * the game announces it in chat. This plugin repeats that announcement as a tick or a cross and
- * shows the fixed table of which button turns on which protection. It never looks at the boss's
- * attacks, never suggests a prayer for the moment and never times anything.
+ * A reference card for the Nightmare's curse: the fixed table of which protection prayer button
+ * turns on which protection while cursed, in a box and in the sidebar. It does not detect the
+ * curse or anything else about the fight; the only game state it uses is whether the player is
+ * at the Nightmare, to show the box and the sidebar button there.
  *
  * The arena is region 15515 for both The Nightmare and Phosani's Nightmare (it is an instance,
  * so the region comes from the instance template); a Nightmare NPC in the scene counts too.
@@ -88,9 +84,7 @@ public class NightmareCurseHelperPlugin extends Plugin
 	@Inject
 	private SpriteManager spriteManager;
 
-	private final CurseState curse = new CurseState();
 	private boolean inArena;
-	private NightmareCursePanel panel;
 	private NavigationButton navButton;
 	/** Whether the sidebar button is added right now; only touched on the Swing thread. */
 	private boolean navShown;
@@ -105,13 +99,12 @@ public class NightmareCurseHelperPlugin extends Plugin
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
-		panel = new NightmareCursePanel(spriteManager);
 		BufferedImage icon = ImageUtil.loadImageResource(NightmareCurseHelperPlugin.class, "panel_icon.png");
 		navButton = NavigationButton.builder()
 			.tooltip("Nightmare Curse Helper")
 			.icon(icon)
 			.priority(10)
-			.panel(panel)
+			.panel(new NightmareCursePanel(spriteManager))
 			.build();
 		updateNav();
 	}
@@ -126,15 +119,8 @@ public class NightmareCurseHelperPlugin extends Plugin
 			clientToolbar.removeNavigation(button);
 			navShown = false;
 		});
-		curse.clear();
 		inArena = false;
-		panel = null;
 		navButton = null;
-	}
-
-	boolean isCursed()
-	{
-		return curse.isCursed();
 	}
 
 	boolean isInArena()
@@ -143,27 +129,10 @@ public class NightmareCurseHelperPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onChatMessage(ChatMessage event)
-	{
-		if (event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM)
-		{
-			return;
-		}
-		if (curse.onMessage(Text.removeTags(event.getMessage())))
-		{
-			publish();
-		}
-	}
-
-	@Subscribe
 	public void onGameTick(GameTick event)
 	{
 		boolean wasInArena = inArena;
 		inArena = findArena();
-		if (!inArena && curse.clear())
-		{
-			publish();
-		}
 		if (inArena != wasInArena)
 		{
 			updateNav();
@@ -171,36 +140,21 @@ public class NightmareCurseHelperPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onActorDeath(ActorDeath event)
-	{
-		if (event.getActor() == client.getLocalPlayer() && curse.clear())
-		{
-			publish();
-		}
-	}
-
-	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
 		GameState state = event.getGameState();
-		if (state == GameState.LOGIN_SCREEN || state == GameState.HOPPING)
+		if ((state == GameState.LOGIN_SCREEN || state == GameState.HOPPING) && inArena)
 		{
 			inArena = false;
-			if (curse.clear())
-			{
-				publish();
-			}
+			updateNav();
 		}
 	}
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (!NightmareCurseConfig.GROUP.equals(event.getGroup()) || navButton == null)
-		{
-			return;
-		}
-		if ("showPanel".equals(event.getKey()) || "panelOnlyAtNightmare".equals(event.getKey()))
+		if (NightmareCurseConfig.GROUP.equals(event.getGroup())
+			&& ("showPanel".equals(event.getKey()) || "panelOnlyAtNightmare".equals(event.getKey())))
 		{
 			updateNav();
 		}
@@ -258,15 +212,5 @@ public class NightmareCurseHelperPlugin extends Plugin
 			}
 		}
 		return false;
-	}
-
-	private void publish()
-	{
-		NightmareCursePanel p = panel;
-		boolean cursed = curse.isCursed();
-		if (p != null)
-		{
-			SwingUtilities.invokeLater(() -> p.setCursed(cursed));
-		}
 	}
 }
