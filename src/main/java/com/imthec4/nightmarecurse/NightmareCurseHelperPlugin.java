@@ -27,7 +27,10 @@ package com.imthec4.nightmarecurse;
 
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
@@ -55,7 +58,9 @@ import net.runelite.client.util.ImageUtil;
  * at the Nightmare, to show the box and the sidebar button there.
  *
  * The arena is region 15515 for both The Nightmare and Phosani's Nightmare (it is an instance,
- * so the region comes from the instance template); a Nightmare NPC in the scene counts too.
+ * so the region comes from the instance template); the boss itself in the scene counts too. Only
+ * the boss's exact names count: the "Little nightmare" pet follows players everywhere, the Grand
+ * Exchange included.
  */
 @PluginDescriptor(
 	name = "Nightmare Curse Helper",
@@ -65,6 +70,7 @@ import net.runelite.client.util.ImageUtil;
 public class NightmareCurseHelperPlugin extends Plugin
 {
 	static final int ARENA_REGION = 15515;
+	private static final Set<String> BOSS_NAMES = new HashSet<>(Arrays.asList("the nightmare", "phosani's nightmare"));
 
 	@Inject
 	private Client client;
@@ -205,12 +211,16 @@ public class NightmareCurseHelperPlugin extends Plugin
 		}
 		for (NPC npc : client.getTopLevelWorldView().npcs())
 		{
-			String name = npc.getName();
-			if (name != null && name.toLowerCase(Locale.ROOT).contains("nightmare"))
+			if (isBoss(npc.getName()))
 			{
 				return true;
 			}
 		}
 		return false;
+	}
+
+	static boolean isBoss(String name)
+	{
+		return name != null && BOSS_NAMES.contains(name.toLowerCase(Locale.ROOT));
 	}
 }
